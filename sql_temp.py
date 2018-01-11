@@ -1,56 +1,50 @@
+##import Sqlite3
 import sqlite3
-import openpyxl
 
+## Connecting to the Database
 connection = sqlite3.connect("globaltemperature.db")
 cursor = connection.cursor()
 
-def create_table():
-	connection.execute(
-		'CREATE TABLE Bycountry(Id INTEGER PRIMARY KEY AUTOINCREMENT, '
-		'Date DATE, '
-		'Average_Temp REAL(4), '
-		'Avg_Temp_Uncertainty REAL(4), '
-		'Country VARCHAR(20));'
-	)
+##Finding distinct Cities
+cities = """
+	SELECT  DISTINCT City, Country, Latitude
+	FROM Bycity
+	WHERE Latitude LIKE '%S'
+	ORDER BY Country
+"""
+cursor.execute(cities)
+result = cursor.fetchall()
 
-	connection.execute(
-		'CREATE TABLE Bystate(Id INTEGER PRIMARY KEY AUTOINCREMENT, '
-		'Date DATE, '
-		'Average_Temp REAL(4), '
-		'Avg_Temp_Uncertainty REAL(4),'
-		'State VARCHAR(30),'
-		'Country VARCHAR(20));'
-	)
+print(result) ## Printing result to the console..
 
-	connection.execute(
-		'CREATE TABLE Bycity( Id INTEGER PRIMARY KEY AUTOINCREMENT, '
-		'Date    DATE, '
-		'Average_Temp    REAL(4), '
-		'Avg_Temp_Uncertainty    REAL(4),'
-		'City   VARCHAR(30),'   
-		'Country VARCHAR(30),'
-		'Latitude    VARCHAR(20),'
-		'Longitude   VARCHAR(20));'
-	)
-#create_table()
+## Finding Min, Max and Average Temperature of Qld in year 2010.
+temp = """
+	SELECT  MIN(Average_Temp) AS Minimum_Temp, MAX(Average_Temp) AS Maximum_Temp, 
+	AVG(Average_Temp) AS Maximum_Temp
+	FROM Bystate
+	WHERE State = 'Queensland' AND STRFTIME('%Y', Date) = '2010';
+"""
+cursor.execute(temp)
+result_temp = cursor.fetchall()
+print(result_temp) #Printing result to console
 
-def load_workbook(filename, sheet):
-	wb = openpyxl.load_workbook(filename)
-	sheet = wb.get_sheet_by_name(sheet)
-	datalists = []
-	datalists.append([[i.value for i in j[0::]] for j in sheet.rows])
+##Creating table Southerncities..
+create_table = """
+	CREATE TABLE SouthernCities(Id INTEGER PRIMARY KEY AUTOINCREMENT, 
+		CityName VARCHAR(50), 
+		Country VARCHAR(50), 
+		GeoLocation VARCHAR(20));
+"""
+cursor.execute(create_table) ## execute cursor()
 
-	return datalists
+#looping through the result to update table SouthernCities
+for i in result:
+	format_str = """INSERT INTO SouthernCities(Id, CityName, Country, GeoLocation)
+	VALUES (NULL, "{CityName}", "{Country}", "{GeoLocation}");"""
+	sql_command = format_str.format(CityName=i[0], Country=i[1], GeoLocation=i[2])
+	cursor.execute(sql_command)
+	connection.commit()
 
-country = load_workbook('GlobalLandTemperaturesByCountry.xlsx', 'GlobalLandTemperaturesByCountry')
-city = load_workbook('GlobalLandTemperaturesByState.xlsx', 'GlobalLandTemperaturesByState')
-state = load_workbook('GlobalLandTemperaturesByMajorCity.xlsx', 'GlobalLandTemperaturesByMajorCity')
-for i in country:
-	for j in i:
-		format_str = """INSERT INTO Bycountry(Id, Date, Average_Temp, Avg_Temp_Uncertainty, Country)
-		VALUES (NULL, "{Date}", "{Average_Temp}", "{Avg_Temp_Uncertainty}", "{Country}");"""
-		sql_command = format_str.format(Date=j[0], Average_Temp=j[1], Avg_Temp_Uncertainty=j[2], Country=j[3])
-		cursor.execute(sql_command)
-		connection.commit()
+	##End of Tasks
 
-
+#######################################################################################
