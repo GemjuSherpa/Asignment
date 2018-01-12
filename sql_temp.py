@@ -1,4 +1,7 @@
-##import Sqlite3
+# Filename: sql_temp.py
+# Author: Gemju Sherpa
+
+# #!/bin/Python
 import sqlite3
 
 ## Connecting to the Database
