@@ -1,3 +1,7 @@
+# #!/bin/Python
+# Filename: excel_temp.py
+# Author: Gemju Sherpa
+
 import openpyxl
 import sqlite3
 
@@ -85,4 +89,4 @@ for key, value in d2.items():
 	next_row += 1
 
 wb.save('World Temperature.xlsx')# Save the result to workbook
-wb.close()
+wb.close() # close workbook
