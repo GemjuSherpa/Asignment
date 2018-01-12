@@ -1,11 +1,10 @@
 import openpyxl
 import sqlite3
 
-wb = openpyxl.Workbook()
-
+# Sqlite3: connect to db and query the result.
 connection = sqlite3.connect("globaltemperature.db")
 cursor = connection.cursor()
-cities = []
+
 
 sql = """
 	SELECT City, STRFTIME('%Y', Date), Average_Temp
@@ -15,8 +14,9 @@ sql = """
 """
 
 cursor.execute(sql)
-cities.append(cursor.fetchall())
 
+cities = []
+cities.append(cursor.fetchall())
 
 year = []
 temp = []
@@ -27,31 +27,32 @@ for lists in cities:
 		temp.append(i[2]) #extract the temp lists
 		city.append(i[0])
 
-data = list(zip(year, temp)) #create a dictionries k, v -> year, temp
+data = list(zip(year, temp)) # create a dictionaries k, v -> year, temp
 
 d = {}
 for k, v in data:
 	d.setdefault(k, []).append(v) # combine dictionaries values together forming a lists as k, v ->year, lists of temp
 
-values = []
-keys = []
+values = [] #lists of Values which is temperature
+keys = [] # lists if keys which is year
 for k, v in d.items():
 	values.append(v)
 	keys.append(k)
 
 
 
-valuesfloat = []
+valuesfloat = [] # lists of values converted to floats
 mean = []
 for j in values:
-	valuesfloat.append([float(i) for i in j if i != "None"])
+	valuesfloat.append([float(i) for i in j if i != "None"]) # eliminate the None values
 for value in valuesfloat:
-	mean.append(sum(value)/len(valuesfloat))
+	mean.append(sum(value)/len(valuesfloat)) # calculate the mean temp for each year
 
 
-year_mean = dict(zip(keys, mean))
-city_year = dict(zip(keys, city))
+year_mean = dict(zip(keys, mean)) # dictionaries with k,v ->year, mean_temp
+city_year = dict(zip(keys, city)) # dictionaries with k,v -> year, cities
 
+# merge a two dictionaries together so that k, v -> year, [mean, cities]
 d2 = {}
 for key in set(year_mean.keys()):
 	try:
@@ -63,35 +64,25 @@ for key in set(year_mean.keys()):
 	except KeyError:
 		pass
 
-print(d2)
-
-#list_of_tuples = list(d2.items())
-#print(list_of_tuples)
-
+## Now, create a workbook and worksheet and save the data from d2
+wb = openpyxl.Workbook()
 sheet = wb.create_sheet('Temperature By City', 0)
 
-#header = ['Year', 'Mean_Temperature', 'City']
+# sheet header
 sheet.cell(column=1, row=1, value='Year')
 sheet.cell(column=2, row=1, value='Mean_Temperature')
 sheet.cell(column=3, row=1, value='City')
 
+#iterate through the d2 keys and values
 next_row=2
 val = []
 for key, value in d2.items():
 	sheet.cell(column=1, row=next_row, value=key)
 	val.append(value)
-	print(val)
 	for v in val:
 		sheet.cell(column=2, row=next_row, value=v[0])
 		sheet.cell(column=3, row=next_row, value=v[1])
 	next_row += 1
 
-#row = 0
-#for key in d2.keys():
-	#sheet.cell(row, 0, key)
-	#sheet.cell(row, 1, d2[key])
-	#row += 1
-wb.save('World Temperature.xlsx')
+wb.save('World Temperature.xlsx')# Save the result to workbook
 wb.close()
-#print(year_mean)
-#print(city_year)
