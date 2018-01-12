@@ -1,3 +1,7 @@
+# #!/bin/Python
+# Filename: db_create.py
+# Author: Gemju Sherpa
+
 import sqlite3
 import openpyxl
 
